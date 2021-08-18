@@ -57,4 +57,23 @@ class Manager extends \yii\db\ActiveRecord
             'id'
         );
     }
+
+    /**
+     * Получаем менеджера с меньшим количеством заявок
+     * @return array|\yii\db\ActiveRecord|null
+     */
+    public static function getManagerWithMinimalRequestsCount()
+    {
+        $nestedQuery = Request::find();
+        $nestedQuery->select(['count(*)'])
+            ->where('manager_id = managers.id');
+
+        $mainQuery = Manager::find();
+        $mainQuery->select(['*', 'request_count' => $nestedQuery])
+            ->where('is_works = true')
+            ->orderBy(['request_count' => SORT_ASC])
+            ->limit(1);
+
+        return $mainQuery->one();
+    }
 }

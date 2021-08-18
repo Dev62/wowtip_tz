@@ -62,4 +62,34 @@ class Request extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Manager::class, ['id' => 'manager_id']);
     }
+
+    /**
+     * Получаем предыдущую по отношению к запрашиваемой заявку
+     * @param Request $item
+     * @return array|\yii\db\ActiveRecord|null
+     */
+    public static function getPreviousRequestFromUser(Request $item)
+    {
+        $mainQuery = Request::find()->alias('main');
+
+        $nestedQuery = Request::find()
+            ->alias('nested')
+            ->select(['id'])
+            ->where(['<', 'DATEDIFF(CURRENT_DATE(), nested.created_at)', 30])
+            ->andWhere(['OR', 'main.email = :email', 'main.phone = :phone'], ['email' => $item->email, 'phone' => $item->phone])
+            ->andWhere(['OR', 'main.email = nested.email', 'main.phone = nested.phone'])
+            ->orderBy(['id' => SORT_DESC])
+            ->limit(1);
+
+
+        // Если заявка не новая, получим предыдущую по отношению к текущей.
+        // Иначе получим самую последнюю заявку пользователя
+        if ($item->id > 0) {
+            $nestedQuery->andWhere(['<', 'nested.id', $item->id]);
+        }
+
+        $mainQuery->andWhere(['=', 'main.id', $nestedQuery]);
+
+        return $mainQuery->one();
+    }
 }
