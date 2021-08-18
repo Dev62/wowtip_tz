@@ -39,6 +39,24 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             [
+                'header' => 'Предыдущая заявка',
+                'class' => yii\grid\ActionColumn::class,
+                'template' => '{previous}',
+                'buttons' => [
+                    'previous' => function ($url, $model) {
+                        $previousDuplicate = Request::getPreviousRequestFromUser($model);
+                        if ((int)$previousDuplicate->id <= 0) {
+                            return '-';
+                        }
+                        else {
+                            return Html::a("# {$previousDuplicate->id}", ['request/view', 'id' => $previousDuplicate->id], [
+                                'class' => 'btn btn-link'
+                            ]);
+                        }
+                    }
+                ]
+            ],
+            [
                 'class' => yii\grid\ActionColumn::class,
                 'template' => '{view}',
                 'buttons' => [
